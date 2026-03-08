@@ -52,13 +52,7 @@ function downloadFile(url, dest) {
 }
 
 async function ensureYtDlp() {
-  // Check if local binary exists
-  if (fs.existsSync(YTDLP_PATH)) {
-    console.log('✅ yt-dlp binary found (local)');
-    return;
-  }
-
-  // Check if yt-dlp is available in system PATH (e.g. installed via nixpacks on Railway)
+  // 1. Check system PATH first (e.g. Dockerfile or nixpacks on Railway)
   try {
     const { execFileSync } = require('child_process');
     const whichCmd = process.platform === 'win32' ? 'where' : 'which';
@@ -68,11 +62,15 @@ async function ensureYtDlp() {
       console.log(`✅ yt-dlp found in system PATH: ${YTDLP_PATH}`);
       return;
     }
-  } catch (e) {
-    // Not in PATH, continue to download
+  } catch (e) {}
+
+  // 2. Check local binary
+  if (fs.existsSync(YTDLP_PATH)) {
+    console.log('✅ yt-dlp binary found (local)');
+    return;
   }
 
-  // Download yt-dlp binary
+  // 3. Download yt-dlp binary as fallback
   console.log('📥 Downloading yt-dlp binary...');
   if (!fs.existsSync(BIN_DIR)) fs.mkdirSync(BIN_DIR, { recursive: true });
   const platform = process.platform;
