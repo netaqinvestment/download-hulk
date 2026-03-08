@@ -20,6 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const BIN_DIR = path.join(__dirname, 'bin');
 let YTDLP_PATH = path.join(BIN_DIR, process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
 const TMP_DIR = path.join(os.tmpdir(), 'download-hulk');
+const COOKIES_PATH = path.join(__dirname, 'cookies.txt');
 
 // Active downloads map
 const downloads = new Map();
@@ -29,6 +30,18 @@ const scheduledDownloads = new Map();
 // Ensure tmp dir
 if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
 
+// ─── Anti-bot default args ──────────────────────────────────────────────────
+function getDefaultArgs() {
+  const args = [
+    '--extractor-args', 'youtube:player_client=mediaconnect',
+    '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    '--no-check-certificates',
+  ];
+  if (fs.existsSync(COOKIES_PATH)) {
+    args.push('--cookies', COOKIES_PATH);
+  }
+  return args;
+}
 function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
@@ -85,8 +98,9 @@ async function ensureYtDlp() {
 
 // ─── Helper: run yt-dlp command ─────────────────────────────────────────────
 function runYtDlp(args, timeout = 60000) {
+  const fullArgs = [...getDefaultArgs(), ...args];
   return new Promise((resolve, reject) => {
-    execFile(YTDLP_PATH, args, { maxBuffer: 1024 * 1024 * 50, timeout }, (error, stdout, stderr) => {
+    execFile(YTDLP_PATH, fullArgs, { maxBuffer: 1024 * 1024 * 50, timeout }, (error, stdout, stderr) => {
       if (error) reject(new Error(stderr || error.message));
       else resolve(stdout);
     });
@@ -149,7 +163,8 @@ function startSingleDownload({ url, formatId, title, trimStart, trimEnd, subtitl
   dlArgs.push(url);
   console.log(`[${id}] Starting: ${url} (format: ${formatId})`);
 
-  const proc = spawn(YTDLP_PATH, dlArgs);
+  const fullDlArgs = [...getDefaultArgs(), ...dlArgs];
+  const proc = spawn(YTDLP_PATH, fullDlArgs);
 
   proc.stdout.on('data', (data) => parseYtDlpProgress(data.toString(), downloads.get(id)));
   proc.stderr.on('data', (data) => {
