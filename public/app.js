@@ -467,29 +467,13 @@ function trackProgress(downloadId) {
 }
 
 async function downloadFile(downloadId) {
-  try {
-    const res = await fetch(`/api/download/${downloadId}/file`);
-    if (!res.ok) throw new Error('Failed');
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const disp = res.headers.get('Content-Disposition');
-    let filename = `${currentVideoInfo?.title || 'video'}.mp4`;
-    if (disp) { const m = disp.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i); if(m) filename = decodeURIComponent(m[1]); }
-    a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  // Direct browser download — triggers native download manager
+  window.open(`/api/download/${downloadId}/file`, '_blank');
 
-    progressStatus.textContent = 'Download complete! 🎉';
-    showSuccessAnimation();
-    showToast('Download complete! 🎉');
-    setTimeout(() => { progressContainer.style.display = 'none'; downloadBtn.disabled = false; }, 3000);
-  } catch(e) {
-    showToast('Failed to save file', 'error');
-    progressContainer.style.display = 'none';
-    downloadBtn.disabled = false;
-  }
+  progressStatus.textContent = 'Download complete! 🎉';
+  showSuccessAnimation();
+  showToast('Download complete! 🎉');
+  setTimeout(() => { progressContainer.style.display = 'none'; downloadBtn.disabled = false; }, 3000);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
