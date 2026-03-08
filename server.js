@@ -197,6 +197,43 @@ function startSingleDownload({ url, formatId, title, trimStart, trimEnd, subtitl
 // API ENDPOINTS
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ─── Health check / diagnostic endpoint ─────────────────────────────────────
+app.get('/api/health', async (req, res) => {
+  const checks = { ytdlpPath: YTDLP_PATH, platform: process.platform };
+  
+  // Check yt-dlp version
+  try {
+    checks.ytdlpVersion = (await runYtDlp(['--version'], 10000)).trim();
+    checks.ytdlpOk = true;
+  } catch (e) {
+    checks.ytdlpOk = false;
+    checks.ytdlpError = e.message;
+  }
+
+  // Check ffmpeg
+  try {
+    const { execFileSync } = require('child_process');
+    checks.ffmpegVersion = execFileSync('ffmpeg', ['-version'], { encoding: 'utf-8', timeout: 5000 }).split('\n')[0];
+    checks.ffmpegOk = true;
+  } catch (e) {
+    checks.ffmpegOk = false;
+    checks.ffmpegError = e.message;
+  }
+
+  // Quick test with a known URL
+  try {
+    const testOutput = await runYtDlp(['--dump-json', '--no-warnings', '--no-playlist', 'https://www.youtube.com/watch?v=jNQXAC9IVRw'], 30000);
+    const testInfo = JSON.parse(testOutput);
+    checks.testTitle = testInfo.title;
+    checks.testOk = true;
+  } catch (e) {
+    checks.testOk = false;
+    checks.testError = e.message;
+  }
+
+  res.json(checks);
+});
+
 // ─── Get video info (enhanced: detect playlists, subtitles, thumbnails) ──────
 app.post('/api/info', async (req, res) => {
   const { url } = req.body;
@@ -211,7 +248,7 @@ app.post('/api/info', async (req, res) => {
       if (lines.length > 1) isPlaylist = true;
     } catch (e) {}
 
-    const output = await runYtDlp(['--dump-json', '--no-warnings', '--no-playlist', url]);
+    const output = await runYtDlp(['--dump-json', '--no-warnings', '--no-playlist', url], 120000);
     const info = JSON.parse(output);
 
     // Process formats
