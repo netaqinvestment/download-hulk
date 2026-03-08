@@ -467,8 +467,13 @@ function trackProgress(downloadId) {
 }
 
 async function downloadFile(downloadId) {
-  // Direct browser download — triggers native download manager
-  window.open(`/api/download/${downloadId}/file`, '_blank');
+  // Trigger native browser download — IDM and download managers will catch this
+  const a = document.createElement('a');
+  a.href = `/api/download/${downloadId}/file`;
+  a.setAttribute('download', '');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
   progressStatus.textContent = 'Download complete! 🎉';
   showSuccessAnimation();
