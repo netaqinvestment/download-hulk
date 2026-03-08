@@ -263,15 +263,51 @@ app.post('/api/info', async (req, res) => {
   if (!url) return res.status(400).json({ error: 'URL is required' });
 
   try {
-    // Check if it's a playlist
+    // Step 1: Check if it's a playlist
     let isPlaylist = false;
+    let playlistEntries = [];
     try {
-      const flatOutput = await runYtDlp(['--flat-playlist', '--dump-json', '--no-warnings', url], 15000);
-      const lines = flatOutput.trim().split('\n');
-      if (lines.length > 1) isPlaylist = true;
+      const flatOutput = await runYtDlp(['--flat-playlist', '--dump-json', '--no-warnings', url], 30000);
+      const lines = flatOutput.trim().split('\n').filter(l => l.trim());
+      if (lines.length > 1) {
+        isPlaylist = true;
+        playlistEntries = lines.map(line => {
+          try { return JSON.parse(line); } catch(e) { return null; }
+        }).filter(Boolean);
+      }
     } catch (e) {}
 
-    const output = await runYtDlp(['--dump-json', '--no-warnings', '--no-playlist', url], 120000);
+    // Step 2: If it's a playlist, return playlist info directly
+    if (isPlaylist && playlistEntries.length > 0) {
+      const first = playlistEntries[0];
+      return res.json({
+        title: `Playlist (${playlistEntries.length} videos)`,
+        thumbnail: first.thumbnails?.[0]?.url || first.thumbnail || null,
+        thumbnails: [],
+        duration: playlistEntries.reduce((sum, e) => sum + (e.duration || 0), 0),
+        uploader: first.uploader || first.channel || 'Unknown',
+        viewCount: 0,
+        platform: first.ie_key || 'YouTube',
+        url,
+        formats: [
+          { id: 'best', label: 'Best Quality (Video + Audio)', quality: 'best', type: 'recommended', format: 'mp4' },
+          { id: 'bestaudio', label: 'Audio Only (MP3)', quality: 'audio', type: 'audio', format: 'mp3' },
+        ],
+        isPlaylist: true,
+        playlistCount: playlistEntries.length,
+        subtitles: [],
+        description: `Playlist with ${playlistEntries.length} videos`,
+      });
+    }
+
+    // Step 3: Single video — get full info
+    let output;
+    try {
+      output = await runYtDlp(['--dump-json', '--no-warnings', '--no-playlist', url], 120000);
+    } catch (e) {
+      // If --no-playlist fails, try without it (some URLs need playlist mode for single videos)
+      output = await runYtDlp(['--dump-json', '--no-warnings', '--playlist-items', '1', url], 120000);
+    }
     const info = JSON.parse(output);
 
     // Process formats
@@ -325,8 +361,7 @@ app.post('/api/info', async (req, res) => {
       for (const line of subLines) {
         const match = line.match(/^(\w{2,5})\s+/);
         if (match && !line.startsWith('[') && !line.includes('Available') && !line.includes('Language')) {
-          const code = match[1];
-          subtitles.push(code);
+          subtitles.push(match[1]);
         }
       }
     } catch (e) {}
@@ -340,7 +375,7 @@ app.post('/api/info', async (req, res) => {
       viewCount: info.view_count || 0,
       platform: info.extractor_key || info.extractor || 'Unknown',
       url, formats: recommendations,
-      isPlaylist, subtitles,
+      isPlaylist: false, subtitles,
       description: (info.description || '').substring(0, 300),
     });
   } catch (error) {

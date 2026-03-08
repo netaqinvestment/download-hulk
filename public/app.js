@@ -216,15 +216,87 @@ async function fetchVideoInfo() {
 
     currentVideoInfo = await response.json();
 
-    // Check for playlist
-    if (currentVideoInfo.isPlaylist) {
-      await loadPlaylist(url);
+    // If playlist, show playlist download UI
+    if (currentVideoInfo.isPlaylist && currentVideoInfo.playlistCount) {
+      showPlaylistDownloadUI(currentVideoInfo);
+      showToast(`📋 Playlist detected: ${currentVideoInfo.playlistCount} videos`);
+    } else {
+      renderVideoInfo();
+      showToast('Video info loaded!');
     }
-
-    renderVideoInfo();
-    showToast('Video info loaded!');
   } catch(e) { showError(e.message); showToast(e.message, 'error'); }
   finally { fetchBtn.classList.remove('loading'); fetchBtn.disabled = false; }
+}
+
+function showPlaylistDownloadUI(info) {
+  videoSection.style.display = 'block';
+  videoThumbnail.src = info.thumbnail || '';
+  videoTitle.textContent = info.title;
+  videoDuration.textContent = `${info.playlistCount} videos • ${formatDuration(info.duration)}`;
+  platformBadge.innerHTML = `📋 ${info.platform}`;
+  uploaderName.textContent = info.uploader;
+  viewCount.textContent = '';
+
+  // Show simple format options + download all button
+  formatGrid.innerHTML = '';
+  info.formats.forEach((f, i) => {
+    const opt = document.createElement('div');
+    opt.className = 'format-option' + (i === 0 ? ' selected recommended' : '');
+    opt.innerHTML = `
+      <span class="format-type-icon">${f.type === 'audio' ? '🎵' : '🚀'}</span>
+      <span class="format-label">${f.label}</span>
+      <span class="format-meta">${f.format.toUpperCase()}</span>
+    `;
+    opt.addEventListener('click', () => {
+      formatGrid.querySelectorAll('.format-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      selectedFormat = f;
+    });
+    formatGrid.appendChild(opt);
+  });
+  selectedFormat = info.formats[0];
+
+  // Replace download button with playlist download
+  downloadBtn.disabled = false;
+  document.querySelector('.download-btn-text').textContent = `⬇️ Download All ${info.playlistCount} Videos`;
+
+  // Hide trim/schedule for playlists
+  document.querySelector('.trim-section').style.display = 'none';
+  document.querySelector('.schedule-section').style.display = 'none';
+
+  // Override download action for playlist
+  downloadBtn.onclick = async () => {
+    downloadBtn.disabled = true;
+    progressContainer.style.display = 'block';
+    progressStatus.textContent = `Starting ${info.playlistCount} downloads...`;
+    progressFill.style.width = '0%';
+
+    try {
+      const res = await fetch('/api/download/playlist', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ url: info.url, formatId: selectedFormat.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      showToast(`🚀 Started ${data.count} playlist downloads!`);
+      progressStatus.textContent = `${data.count} downloads started! Check Queue tab`;
+      progressFill.style.width = '100%';
+      progressPercent.textContent = '100%';
+      switchToTab('queue');
+      startQueueSSE();
+
+      setTimeout(() => { progressContainer.style.display = 'none'; downloadBtn.disabled = false; }, 3000);
+    } catch(e) {
+      showError(e.message || 'Playlist download failed');
+      showToast('Playlist download failed', 'error');
+      progressContainer.style.display = 'none';
+      downloadBtn.disabled = false;
+    }
+    // Restore normal download handler
+    downloadBtn.onclick = null;
+    downloadBtn.addEventListener('click', startDownload);
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
