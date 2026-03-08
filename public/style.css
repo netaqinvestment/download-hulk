@@ -306,6 +306,19 @@ body{font-family:var(--font-sans);background:var(--bg-primary);color:var(--text-
 .scheduled-time{font-size:0.78rem;color:var(--text-muted);}
 .scheduled-cancel{padding:4px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-full);color:var(--accent-red);font-size:0.75rem;cursor:pointer;font-family:var(--font-sans);}
 
+/* Queue Notice */
+.queue-notice{padding:12px 18px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.15);border-radius:var(--radius-md);font-size:0.85rem;color:var(--text-secondary);line-height:1.5;text-align:center;}
+.queue-notice strong{color:var(--accent-purple);}
+
+/* Queue Item Actions */
+.queue-item-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.queue-item.complete{border-color:rgba(16,185,129,0.2);background:rgba(16,185,129,0.03);}
+.queue-item.failed{border-color:rgba(239,68,68,0.15);background:rgba(239,68,68,0.03);opacity:0.7;}
+.save-btn{background:linear-gradient(135deg,var(--accent-green),var(--accent-cyan))!important;font-size:0.78rem!important;padding:5px 14px!important;}
+.cancel-btn{font-size:0.78rem!important;padding:5px 12px!important;}
+.delete-btn{font-size:0.78rem!important;padding:5px 10px!important;}
+.clear-completed-btn{align-self:center;margin-bottom:8px;}
+
 /* ─── History Page ───────────────────────────────────────────────────────── */
 .history-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
 .history-header .page-title{margin-bottom:0;text-align:left;}

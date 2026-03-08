@@ -133,7 +133,8 @@ function startSingleDownload({ url, formatId, title, trimStart, trimEnd, subtitl
     percent: 0, speed: '', eta: '', status: 'starting',
     tmpFile, safeTitle, ext, error: null,
     url, title: title || 'Untitled', formatId,
-    startedAt: Date.now(),
+    startedAt: Date.now(), completedAt: null,
+    proc: null, // store process ref for cancel
   });
 
   const dlArgs = ['--no-warnings', '--no-playlist', '--newline', '--progress', '-o', tmpFile];
@@ -166,6 +167,10 @@ function startSingleDownload({ url, formatId, title, trimStart, trimEnd, subtitl
   const fullDlArgs = [...getDefaultArgs(), ...dlArgs];
   const proc = spawn(YTDLP_PATH, fullDlArgs);
 
+  // Store process ref for cancel support
+  const progress = downloads.get(id);
+  progress.proc = proc;
+
   proc.stdout.on('data', (data) => parseYtDlpProgress(data.toString(), downloads.get(id)));
   proc.stderr.on('data', (data) => {
     parseYtDlpProgress(data.toString(), downloads.get(id));
@@ -174,6 +179,10 @@ function startSingleDownload({ url, formatId, title, trimStart, trimEnd, subtitl
   proc.on('close', (code) => {
     const progress = downloads.get(id);
     if (!progress) return;
+    progress.proc = null; // clear ref
+
+    if (progress.status === 'cancelled') return; // was cancelled by user
+
     if (code !== 0) {
       progress.status = 'error';
       progress.error = 'Download failed. Please try again.';
@@ -195,6 +204,7 @@ function startSingleDownload({ url, formatId, title, trimStart, trimEnd, subtitl
     progress.tmpFile = actualFile;
     progress.ext = path.extname(actualFile).slice(1) || ext;
     progress.fileSize = fs.statSync(actualFile).size;
+    progress.completedAt = Date.now();
 
     // Check for subtitle file
     const srtFile = files.find(f => f.endsWith('.srt') || f.endsWith('.vtt'));
@@ -441,6 +451,82 @@ app.delete('/api/download/schedule/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// ─── Cancel active download (kill process) ──────────────────────────────────
+app.delete('/api/download/:id/cancel', (req, res) => {
+  const progress = downloads.get(req.params.id);
+  if (!progress) return res.status(404).json({ error: 'Download not found' });
+
+  if (progress.proc) {
+    progress.status = 'cancelled';
+    progress.proc.kill('SIGTERM');
+    console.log(`[${req.params.id}] Cancelled by user`);
+  }
+  // Clean up temp file
+  try { if (fs.existsSync(progress.tmpFile)) fs.unlinkSync(progress.tmpFile); } catch(e) {}
+  downloads.delete(req.params.id);
+  res.json({ success: true });
+});
+
+// ─── Delete a download entry (completed/failed/cancelled) ───────────────────
+app.delete('/api/download/:id', (req, res) => {
+  const progress = downloads.get(req.params.id);
+  if (!progress) return res.status(404).json({ error: 'Download not found' });
+
+  // Kill process if still running
+  if (progress.proc) {
+    progress.status = 'cancelled';
+    progress.proc.kill('SIGTERM');
+  }
+  // Clean up temp file
+  try { if (progress.tmpFile && fs.existsSync(progress.tmpFile)) fs.unlinkSync(progress.tmpFile); } catch(e) {}
+  downloads.delete(req.params.id);
+  res.json({ success: true });
+});
+
+// ─── Clear all completed downloads ──────────────────────────────────────────
+app.delete('/api/downloads/completed', (req, res) => {
+  let count = 0;
+  downloads.forEach((dl, id) => {
+    if (dl.status === 'complete' || dl.status === 'error' || dl.status === 'cancelled') {
+      try { if (dl.tmpFile && fs.existsSync(dl.tmpFile)) fs.unlinkSync(dl.tmpFile); } catch(e) {}
+      downloads.delete(id);
+      count++;
+    }
+  });
+  res.json({ success: true, cleared: count });
+});
+
+// ─── Download entire playlist (one-click) ───────────────────────────────────
+app.post('/api/download/playlist', async (req, res) => {
+  const { url, formatId } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL is required' });
+
+  try {
+    const output = await runYtDlp([
+      '--flat-playlist', '--dump-json', '--no-warnings', url
+    ], 120000);
+
+    const entries = output.trim().split('\n').map(line => {
+      try { return JSON.parse(line); } catch(e) { return null; }
+    }).filter(Boolean);
+
+    if (entries.length === 0) {
+      return res.status(400).json({ error: 'No videos found in playlist' });
+    }
+
+    const downloadIds = entries.map(entry => startSingleDownload({
+      url: entry.url || `https://www.youtube.com/watch?v=${entry.id}`,
+      formatId: formatId || 'best',
+      title: entry.title || 'Playlist Video',
+    }));
+
+    console.log(`[Playlist] Started ${downloadIds.length} downloads from: ${url}`);
+    res.json({ downloadIds, count: downloadIds.length });
+  } catch(e) {
+    res.status(500).json({ error: 'Failed to load playlist: ' + e.message });
+  }
+});
+
 // ─── Serve completed download file ──────────────────────────────────────────
 app.get('/api/download/:id/file', (req, res) => {
   const progress = downloads.get(req.params.id);
@@ -461,11 +547,12 @@ app.get('/api/download/:id/file', (req, res) => {
 
   const stream = fs.createReadStream(filePath);
   stream.pipe(res);
+  // Don't delete immediately — keep for 1 hour for background downloads
   stream.on('end', () => {
     setTimeout(() => {
-      try { fs.unlinkSync(filePath); } catch (e) {}
+      try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (e) {}
       downloads.delete(req.params.id);
-    }, 30000);
+    }, 3600000); // 1 hour
   });
 });
 

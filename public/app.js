@@ -598,9 +598,9 @@ function startQueueSSE() {
 
 function renderQueue() {
   const entries = Object.entries(activeDownloads);
-  const active = entries.filter(([_,d]) => d.status !== 'complete' && d.status !== 'error');
+  const active = entries.filter(([_,d]) => d.status !== 'complete' && d.status !== 'error' && d.status !== 'cancelled');
   const completed = entries.filter(([_,d]) => d.status === 'complete');
-  const errored = entries.filter(([_,d]) => d.status === 'error');
+  const errored = entries.filter(([_,d]) => d.status === 'error' || d.status === 'cancelled');
 
   // Update badge
   if (active.length > 0) {
@@ -611,25 +611,51 @@ function renderQueue() {
   }
 
   queueSubtitle.textContent = entries.length === 0
-    ? 'No active downloads'
+    ? 'No active downloads — downloads continue even if you close this page!'
     : `${active.length} downloading, ${completed.length} complete, ${errored.length} failed`;
 
   queueList.innerHTML = '';
+
+  // Background download notice
+  if (entries.length > 0) {
+    const notice = document.createElement('div');
+    notice.className = 'queue-notice';
+    notice.innerHTML = `💡 <strong>Downloads run on the server</strong> — you can close this tab and come back later to save your files!`;
+    queueList.appendChild(notice);
+  }
+
+  // Clear completed button
+  if (completed.length + errored.length > 0) {
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'pill-btn secondary clear-completed-btn';
+    clearBtn.textContent = `🗑️ Clear ${completed.length + errored.length} finished`;
+    clearBtn.addEventListener('click', clearCompleted);
+    queueList.appendChild(clearBtn);
+  }
+
   entries.forEach(([id, dl]) => {
-    const icon = dl.status === 'complete' ? '✅' : dl.status === 'error' ? '❌' : dl.status === 'downloading' ? '⬇️' : '⏳';
+    const isActive = dl.status === 'downloading' || dl.status === 'starting';
+    const isComplete = dl.status === 'complete';
+    const isError = dl.status === 'error' || dl.status === 'cancelled';
+    const icon = isComplete ? '✅' : isError ? '❌' : dl.status === 'downloading' ? '⬇️' : '⏳';
+
     const item = document.createElement('div');
-    item.className = 'queue-item';
+    item.className = `queue-item ${isComplete ? 'complete' : ''} ${isError ? 'failed' : ''}`;
     item.innerHTML = `
       <span class="queue-item-icon">${icon}</span>
       <div class="queue-item-info">
         <div class="queue-item-title">${dl.title || 'Unknown'}</div>
-        <div class="queue-item-status">${dl.status}${dl.speed ? ' • '+dl.speed : ''}${dl.fileSize ? ' • '+formatSize(dl.fileSize) : ''}</div>
+        <div class="queue-item-status">${dl.status}${dl.speed ? ' • '+dl.speed : ''}${dl.eta ? ' • ETA '+dl.eta : ''}${dl.fileSize ? ' • '+formatSize(dl.fileSize) : ''}</div>
       </div>
       <div class="queue-item-progress">
         <div class="progress-bar"><div class="progress-fill" style="width:${dl.percent||0}%"></div></div>
         <div class="queue-item-percent">${Math.round(dl.percent||0)}%</div>
       </div>
-      ${dl.status === 'complete' ? `<button class="pill-btn" onclick="window.open('/api/download/${id}/file')">Save</button>` : ''}
+      <div class="queue-item-actions">
+        ${isComplete ? `<button class="pill-btn save-btn" onclick="window.open('/api/download/${id}/file')">💾 Save</button>` : ''}
+        ${isActive ? `<button class="pill-btn danger cancel-btn" onclick="cancelDownload('${id}')">✕ Cancel</button>` : ''}
+        ${isComplete || isError ? `<button class="pill-btn secondary delete-btn" onclick="deleteDownload('${id}')">🗑️</button>` : ''}
+      </div>
     `;
     queueList.appendChild(item);
   });
@@ -667,6 +693,28 @@ window.cancelScheduled = async function(id) {
     loadScheduled();
   } catch(e) { showToast('Failed to cancel', 'error'); }
 };
+
+window.cancelDownload = async function(id) {
+  try {
+    await fetch(`/api/download/${id}/cancel`, {method:'DELETE'});
+    showToast('⏹️ Download cancelled');
+  } catch(e) { showToast('Failed to cancel', 'error'); }
+};
+
+window.deleteDownload = async function(id) {
+  try {
+    await fetch(`/api/download/${id}`, {method:'DELETE'});
+    showToast('🗑️ Removed');
+  } catch(e) { showToast('Failed to remove', 'error'); }
+};
+
+async function clearCompleted() {
+  try {
+    const res = await fetch('/api/downloads/completed', {method:'DELETE'});
+    const data = await res.json();
+    showToast(`🗑️ Cleared ${data.cleared} items`);
+  } catch(e) { showToast('Failed to clear', 'error'); }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HISTORY (localStorage)
