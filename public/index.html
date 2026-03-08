@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Download Hulk - Download Videos from Any Platform</title>
+  <meta name="description" content="Download videos from YouTube, Instagram, Facebook, TikTok, Twitter and 1000+ platforms in any quality.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Animated background -->
+  <div class="bg-animation">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-orb bg-orb-4"></div>
+    <div class="bg-grid"></div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <div class="logo-icon">
+        <svg viewBox="0 0 40 40" fill="none">
+          <rect width="40" height="40" rx="10" fill="url(#logoGrad)"/>
+          <path d="M20 8L20 24M20 24L14 18M20 24L26 18M12 28H28" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs><linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#a855f7"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+        </svg>
+      </div>
+      <span class="brand-text">Download<span class="brand-accent">Hulk</span></span>
+    </div>
+    <div class="nav-actions">
+      <div class="stat-chip">
+        <span class="stat-dot"></span>
+        <span>1000+ Platforms</span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <svg class="theme-icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/></svg>
+        <svg class="theme-icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <!-- Tab Navigation -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="download" id="tabDownload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Download</span>
+      </button>
+      <button class="tab-btn" data-tab="queue" id="tabQueue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span>Queue</span>
+        <span class="tab-badge" id="queueBadge" style="display:none;">0</span>
+      </button>
+      <button class="tab-btn" data-tab="history" id="tabHistory">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>History</span>
+      </button>
+    </div>
+
+    <!-- ═══════════════ DOWNLOAD TAB ═══════════════ -->
+    <section class="tab-content active" id="panelDownload">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-badge"><span>⚡</span><span>Lightning Fast Downloads</span></div>
+        <h1 class="hero-title">Download Any Video<br><span class="gradient-text">From Any Platform</span></h1>
+        <p class="hero-subtitle">Paste a link from YouTube, Instagram, Facebook, TikTok, or 1000+ others. Choose quality. Download.</p>
+
+        <!-- Drag & Drop Zone / URL Input -->
+        <div class="input-zone" id="inputZone">
+          <div class="drop-overlay" id="dropOverlay">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span>Drop URL here</span>
+          </div>
+          <div class="input-glow"></div>
+          <div class="input-wrapper">
+            <div class="input-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <input type="url" id="urlInput" class="url-input" placeholder="Paste video link here..." autocomplete="off" spellcheck="false">
+            <button class="paste-btn" id="pasteBtn" title="Paste from clipboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </button>
+            <button class="fetch-btn" id="fetchBtn">
+              <span class="fetch-btn-text">Get Video</span>
+              <span class="fetch-btn-loader"><svg class="spinner" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="60 30"/></svg></span>
+              <svg class="fetch-btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Batch URL Toggle -->
+        <div class="batch-toggle">
+          <button class="batch-btn" id="batchToggle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Batch URLs
+          </button>
+        </div>
+
+        <!-- Batch URL Input (hidden by default) -->
+        <div class="batch-input-container" id="batchContainer" style="display:none;">
+          <textarea id="batchInput" class="batch-textarea" placeholder="Paste multiple URLs here (one per line)..." rows="5"></textarea>
+          <button class="fetch-btn batch-fetch-btn" id="batchFetchBtn">
+            <span>Download All</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <!-- Error -->
+        <div class="error-message" id="errorMessage">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span id="errorText"></span>
+        </div>
+      </div>
+
+      <!-- Playlist Info -->
+      <div class="playlist-section" id="playlistSection" style="display:none;">
+        <div class="glass-card">
+          <div class="playlist-header">
+            <h3 class="section-heading">🎵 Playlist Detected</h3>
+            <div class="playlist-actions">
+              <button class="pill-btn" id="selectAllPlaylist">Select All</button>
+              <button class="pill-btn secondary" id="deselectAllPlaylist">Deselect All</button>
+              <button class="pill-btn accent" id="downloadPlaylist">Download Selected</button>
+            </div>
+          </div>
+          <div class="playlist-entries" id="playlistEntries"></div>
+        </div>
+      </div>
+
+      <!-- Video Info Section -->
+      <section class="video-section" id="videoSection" style="display:none;">
+        <div class="video-card glass-card">
+          <div class="video-header">
+            <div class="thumbnail-container" id="thumbnailContainer">
+              <img id="videoThumbnail" src="" alt="" class="video-thumbnail">
+              <div class="thumbnail-overlay">
+                <div class="duration-badge" id="videoDuration"></div>
+              </div>
+              <div class="platform-badge" id="platformBadge"></div>
+              <!-- Video Preview Player (hidden until play) -->
+              <div class="preview-player" id="previewPlayer" style="display:none;">
+                <video id="previewVideo" controls></video>
+              </div>
+              <!-- Thumbnail download btn -->
+              <button class="thumb-dl-btn" id="thumbDlBtn" title="Download Thumbnail">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </button>
+            </div>
+            <div class="video-meta">
+              <h2 class="video-title" id="videoTitle"></h2>
+              <div class="video-details">
+                <span class="video-uploader" id="videoUploader">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span id="uploaderName"></span>
+                </span>
+                <span class="video-views" id="videoViews">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <span id="viewCount"></span>
+                </span>
+              </div>
+              <!-- Subtitle badges -->
+              <div class="subtitle-badges" id="subtitleBadges" style="display:none;">
+                <span class="sub-label">📝 Subtitles:</span>
+                <div class="sub-chips" id="subtitleChips"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Format Selection -->
+          <div class="format-section">
+            <h3 class="format-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              Choose Quality
+            </h3>
+            <div class="format-grid" id="formatGrid"></div>
+          </div>
+
+          <!-- Trim Controls -->
+          <div class="trim-section" id="trimSection">
+            <div class="trim-header">
+              <label class="toggle-switch">
+                <input type="checkbox" id="trimToggle">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="trim-label">✂️ Trim Video</span>
+            </div>
+            <div class="trim-controls" id="trimControls" style="display:none;">
+              <div class="trim-input-group">
+                <label>Start Time</label>
+                <input type="text" id="trimStart" class="trim-input" placeholder="00:00:00" value="">
+              </div>
+              <span class="trim-dash">→</span>
+              <div class="trim-input-group">
+                <label>End Time</label>
+                <input type="text" id="trimEnd" class="trim-input" placeholder="00:05:00" value="">
+              </div>
+            </div>
+          </div>
+
+          <!-- Schedule -->
+          <div class="schedule-section" id="scheduleSection">
+            <div class="schedule-header">
+              <label class="toggle-switch">
+                <input type="checkbox" id="scheduleToggle">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="trim-label">⏰ Schedule Download</span>
+            </div>
+            <div class="schedule-controls" id="scheduleControls" style="display:none;">
+              <input type="datetime-local" id="scheduleTime" class="schedule-input">
+            </div>
+          </div>
+
+          <!-- Download Button -->
+          <div class="download-section">
+            <button class="download-btn" id="downloadBtn" disabled>
+              <div class="download-btn-bg"></div>
+              <svg class="download-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span class="download-btn-text">Download Now</span>
+            </button>
+
+            <!-- Progress -->
+            <div class="progress-container" id="progressContainer" style="display:none;">
+              <div class="progress-info">
+                <span class="progress-status" id="progressStatus">Preparing...</span>
+                <span class="progress-percent" id="progressPercent">0%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+              <div class="progress-details">
+                <span id="progressSpeed"></span>
+                <span id="progressEta"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Success Animation -->
+      <div class="success-overlay" id="successOverlay" style="display:none;">
+        <div class="success-content">
+          <div class="success-checkmark">
+            <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="25" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="3" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+          </div>
+          <h2 class="success-title">Download Complete!</h2>
+          <p class="success-sub">Your file has been saved</p>
+        </div>
+      </div>
+
+      <!-- Platforms -->
+      <section class="platforms-section">
+        <h2 class="section-title"><span class="gradient-text">Supported Platforms</span></h2>
+        <p class="section-subtitle">Download from any of these platforms and 1000+ more</p>
+        <div class="platforms-grid" id="platformsGrid"></div>
+      </section>
+
+      <!-- Features -->
+      <section class="features-section">
+        <div class="features-grid">
+          <div class="feature-card"><div class="feature-icon" style="--accent:#a855f7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h3>Lightning Fast</h3><p>Direct streaming from source. No waiting.</p></div>
+          <div class="feature-card"><div class="feature-icon" style="--accent:#06b6d4;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><h3>All Qualities</h3><p>From 144p to 4K/8K. Your choice.</p></div>
+          <div class="feature-card"><div class="feature-icon" style="--accent:#10b981;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Safe & Private</h3><p>No tracking. Your downloads stay private.</p></div>
+          <div class="feature-card"><div class="feature-icon" style="--accent:#f59e0b;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h3>No Limits</h3><p>Unlimited downloads. No restrictions.</p></div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ═══════════════ QUEUE TAB ═══════════════ -->
+    <section class="tab-content" id="panelQueue">
+      <div class="queue-page">
+        <h2 class="page-title gradient-text">Download Queue</h2>
+        <p class="page-subtitle" id="queueSubtitle">No active downloads</p>
+        <div class="queue-list" id="queueList"></div>
+        <!-- Scheduled Downloads -->
+        <div class="scheduled-section" id="scheduledSection" style="display:none;">
+          <h3 class="section-heading">⏰ Scheduled Downloads</h3>
+          <div class="scheduled-list" id="scheduledList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ HISTORY TAB ═══════════════ -->
+    <section class="tab-content" id="panelHistory">
+      <div class="history-page">
+        <div class="history-header">
+          <h2 class="page-title gradient-text">Download History</h2>
+          <button class="pill-btn danger" id="clearHistory">Clear History</button>
+        </div>
+        <p class="page-subtitle" id="historySubtitle">No download history yet</p>
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <span class="footer-brand">Download<span class="brand-accent">Hulk</span></span>
+      <span class="footer-text">Built with ⚡ for speed</span>
+    </div>
+  </footer>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
