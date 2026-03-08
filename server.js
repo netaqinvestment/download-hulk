@@ -18,7 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── yt-dlp binary management ───────────────────────────────────────────────
 const BIN_DIR = path.join(__dirname, 'bin');
-const YTDLP_PATH = path.join(BIN_DIR, process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+let YTDLP_PATH = path.join(BIN_DIR, process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
 const TMP_DIR = path.join(os.tmpdir(), 'download-hulk');
 
 // Active downloads map
@@ -52,10 +52,27 @@ function downloadFile(url, dest) {
 }
 
 async function ensureYtDlp() {
+  // Check if local binary exists
   if (fs.existsSync(YTDLP_PATH)) {
-    console.log('✅ yt-dlp binary found');
+    console.log('✅ yt-dlp binary found (local)');
     return;
   }
+
+  // Check if yt-dlp is available in system PATH (e.g. installed via nixpacks on Railway)
+  try {
+    const { execFileSync } = require('child_process');
+    const whichCmd = process.platform === 'win32' ? 'where' : 'which';
+    const result = execFileSync(whichCmd, ['yt-dlp'], { encoding: 'utf-8', timeout: 5000 }).trim();
+    if (result) {
+      YTDLP_PATH = result.split('\n')[0].trim();
+      console.log(`✅ yt-dlp found in system PATH: ${YTDLP_PATH}`);
+      return;
+    }
+  } catch (e) {
+    // Not in PATH, continue to download
+  }
+
+  // Download yt-dlp binary
   console.log('📥 Downloading yt-dlp binary...');
   if (!fs.existsSync(BIN_DIR)) fs.mkdirSync(BIN_DIR, { recursive: true });
   const platform = process.platform;
